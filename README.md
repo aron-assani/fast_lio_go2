@@ -1,5 +1,45 @@
 > ROS2 Fork repo maintainer: [Ericsiii](https://github.com/Ericsii)
 
+## Go2 Compatibility
+
+**Changes:**
+  - launch file: 
+    - camera_init tilt relative to odom
+    - base_link reorientation relative to tilted body
+  - config file:
+    - custom for L1/L2 -> TUNING NEEDED
+  - rviz file:
+    - minor visual changes
+  - preprocess.cpp:
+    - added utlidar_handler 
+    - added UTLIDAR switch case
+  - preprocess.h:
+    - added utlidar_handler declaration
+    - added UTLIDAR enum value
+    - added utlidar_ros namespace
+
+Current problem:
+  - even after transformations, upon rotating the robot, a new, tilted map is getting generated onto the aligned one
+
+Goals:
+  - stable odometry
+  - map generation
+  - navigation based on prerecorded map
+    - mapping the lab
+    - importing nav2 (or other) navigation stack
+    - create controller script with Unitree sport client
+
+Transformation:
+  - roll: 0
+  - pitch: - (180 + 15.1)
+  - yaw: -90
+
+## Dockerization
+  - docker environment:
+    - Dockerfile + docker-compose
+    - Livox SDK2, livox_ros_driver2, unitree_ros2, FAST_LIO_ROS2
+    - .env for network interface
+
 ## Related Works and Extended Application
 
 **SLAM:**
