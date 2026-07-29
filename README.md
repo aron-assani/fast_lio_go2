@@ -3,7 +3,7 @@
 
 > **ROS 2 Fork maintainer:** [Ericsiii](https://github.com/Ericsii)
 
-This repository is a customized fork of FAST-LIO_ROS2, adapted for the Unitree Go2 robot using its' Unilidar sensor. The environment is fully dockerized.
+This repository is a customized fork of FAST-LIO_ROS2, adapted for the Unitree Go2 robot using its Unilidar sensor. The environment is fully dockerized.
 
 ### Unitree Go2 Compatibility
 
@@ -42,12 +42,11 @@ Navigate to the root of the repository (or the `docker` directory) where `docker
 xhost +local:docker
 
 # Build the image, specifying your hardware network interface
-docker compose up -d --build --build-arg NETWORK_INTERFACE=enx00133b9a06ef
+NETWORK_INTERFACE=enx00133b9a06ef docker compose up -d --build
 ```
 
 **2. Start the Container**
 ```bash
-docker compose up -d
 docker exec -it fast_lio_go2 /bin/bash
 ```
 
