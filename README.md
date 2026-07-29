@@ -1,41 +1,65 @@
-> ROS2 Fork repo maintainer: [Ericsiii](https://github.com/Ericsii)
 
-## Go2 Compatibility
+## Fork Features: Unitree Go2 Compatibility and Dockerization
 
-**Changes:**
-  - config file:
-    - custom for L1/L2 -> TUNING NEEDED
-  - rviz file:
-    - minor visual changes
-  - preprocess.cpp:
-    - added utlidar_handler 
-    - added UTLIDAR switch case
-  - preprocess.h:
-    - added utlidar_handler declaration
-    - added UTLIDAR enum value
-    - added utlidar_ros namespace
+> **ROS 2 Fork maintainer:** [Ericsiii](https://github.com/Ericsii)
 
-Current problem:
-  - even after transformations, upon rotating the robot, a new, tilted map is getting generated onto the aligned one
+This repository is a customized fork of FAST-LIO_ROS2, adapted for the Unitree Go2 robot using its' Unilidar sensor. The environment is fully dockerized.
 
-Goals:
-  - stable odometry
-  - map generation
-  - navigation based on prerecorded map
-    - mapping the lab
-    - importing nav2 (or other) navigation stack
-    - create controller script with Unitree sport client
+### Unitree Go2 Compatibility
 
-Transformation:
-  - roll: 0
-  - pitch: - (180 + 15.1)
-  - yaw: -90
+**Modifications:**
+- **config file:** custom parameters for L1/L2 Unilidar
+- **rviz file:** minor visual adjustments for the Go2 mapping environment
+- **preprocess.cpp:** added `utlidar_handler` and a `UTLIDAR` switch case to parse Go2-specific point clouds
+- **preprocess.h:** added `utlidar_handler` declaration, `UTLIDAR` enum value, and `utlidar_ros` namespace
+- **LiDAR to world transform (in world frame):**
+  - Roll: 0
+  - Pitch: - (180° + 15.1°)
+  - Yaw: -90°
 
-## Dockerization
-  - docker environment:
-    - Dockerfile + docker-compose
-    - Livox SDK2, livox_ros_driver2, unitree_ros2, FAST_LIO_ROS2
-    - .env for network interface
+**Goals:**
+- Achieve stable odometry and map generation
+- Enable navigation based on a pre-recorded map
+- Import Nav2 (or alternative) navigation stack
+- Create a controller script interfacing with the Unitree sport client
+
+---
+
+### Prerequisites
+- **OS:** Linux (Ubuntu), RViz forwarding strictly requires an X11 display server environment on the host
+- **Dependencies:** 
+  - Git
+  - Docker and the Docker Compose plugin
+
+### Dockerization and Quick Start
+
+The containerized environment includes Livox SDK2, livox_ros_driver2, unitree_ros2, and FAST_LIO_ROS2.
+
+**1. Build the Docker Image**
+Navigate to the root of the repository (or the `docker` directory) where `docker-compose.yml` is located.
+```bash
+# Allow the container to forward RViz to your host display (Linux X11)
+xhost +local:docker
+
+# Build the image, specifying your hardware network interface
+docker compose up -d --build --build-arg NETWORK_INTERFACE=enx00133b9a06ef
+```
+
+**2. Start the Container**
+```bash
+docker compose up -d
+docker exec -it fast_lio_go2 /bin/bash
+```
+
+**3. Launch FAST-LIO**
+Inside the container, run the mapping node.
+```bash
+ros2 launch fast_lio mapping.launch.py config_file:=utlidar.yaml
+```
+
+---
+
+# Original FAST-LIO Documentation
 
 ## Related Works and Extended Application
 
