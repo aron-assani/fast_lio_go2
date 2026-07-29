@@ -3,9 +3,6 @@
 ## Go2 Compatibility
 
 **Changes:**
-  - launch file: 
-    - camera_init tilt relative to odom
-    - base_link reorientation relative to tilted body
   - config file:
     - custom for L1/L2 -> TUNING NEEDED
   - rviz file:
