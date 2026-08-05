@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     ros-humble-tf2-geometry-msgs \
     ros-humble-rviz2 \
     ros-humble-rviz-default-plugins \
+    ros-humble-pointcloud-to-laserscan \
     libgl1 \
     libglx-mesa0 \
     nano \
