@@ -38,7 +38,7 @@ RUN cd /tmp && \
 WORKDIR /root/workspace
 RUN mkdir -p src && \
     cd src && \
-    git clone --recursive https://github.com/Ericsii/FAST_LIO.git && \
+    git clone --recursive https://github.com/aron-assani/fast_lio_go2 && \
     git clone https://github.com/unitreerobotics/unitree_ros2.git && \
     git clone https://github.com/Livox-SDK/livox_ros_driver2.git
 
