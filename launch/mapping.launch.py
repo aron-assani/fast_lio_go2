@@ -27,7 +27,7 @@ def generate_launch_description():
         description='Yaml config file path'
     )
     declare_config_file_cmd = DeclareLaunchArgument(
-        'config_file', default_value='mid360.yaml',
+        'config_file', default_value='utlidar.yaml',
         description='Config file'
     )
     declare_rviz_cmd = DeclareLaunchArgument(
@@ -57,17 +57,17 @@ def generate_launch_description():
         condition=IfCondition(rviz_use)
     )
 
-    map_to_odom_tf = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='map_to_odom_publisher',
-        parameters=[{'use_sim_time': use_sim_time}],
-        arguments=[
-            '--x', '0.0', '--y', '0.0', '--z', '0.0',
-            '--yaw', '0.0', '--pitch', '0.0', '--roll', '0.0',
-            '--frame-id', 'map', '--child-frame-id', 'odom'
-        ]
-    )
+#   map_to_odom_tf = Node(
+#       package='tf2_ros',
+#       executable='static_transform_publisher',
+#       name='map_to_odom_publisher',
+#       parameters=[{'use_sim_time': use_sim_time}],
+#       arguments=[
+#           '--x', '0.0', '--y', '0.0', '--z', '0.0',
+#           '--yaw', '0.0', '--pitch', '0.0', '--roll', '0.0',
+#           '--frame-id', 'map', '--child-frame-id', 'odom'
+#       ]
+#   )
 
     odom_to_camera_init_tf = Node(
         package='tf2_ros',
@@ -94,7 +94,7 @@ def generate_launch_description():
         arguments=[
             '--x', '0.2894', 
             '--y', '0.0', 
-            '--z', '0.0468',
+            '--z', '-0.075',
             '--yaw', '0.0', 
             '--pitch', '-2.878', 
             '--roll', '0.0',
@@ -137,7 +137,7 @@ def generate_launch_description():
 
     ld.add_action(fast_lio_node)
     ld.add_action(rviz_node)
-    ld.add_action(map_to_odom_tf)
+#   ld.add_action(map_to_odom_tf)
     ld.add_action(odom_to_camera_init_tf)
     ld.add_action(body_to_base_link_tf)
     ld.add_action(pointcloud_to_laserscan_node)
