@@ -3,58 +3,176 @@
 
 > **ROS 2 Fork maintainer:** [Ericsiii](https://github.com/Ericsii)
 
-This repository is a customized fork of FAST-LIO_ROS2, adapted for the Unitree Go2 robot using its Unilidar sensor. The environment is fully dockerized.
+## Fork Features: Unitree Go2 Compatibility and Dockerization
 
-### Unitree Go2 Compatibility
+This repository integrates the Unitree Go2 with FAST-LIO and Nav2 for stable odometry, map generation, and autonomous navigation. The environment is fully dockerized.
 
-**Modifications:**
-- **config file:** custom parameters for L1/L2 Unilidar
-- **rviz file:** minor visual adjustments for the Go2 mapping environment
-- **preprocess.cpp:** added `utlidar_handler` and a `UTLIDAR` switch case to parse Go2-specific point clouds
-- **preprocess.h:** added `utlidar_handler` declaration, `UTLIDAR` enum value, and `utlidar_ros` namespace
-- **LiDAR to world transform (in world frame):**
-  - Roll: 0
-  - Pitch: - (180° + 15.1°)
-  - Yaw: -90°
+### ROS Topic Architecture
 
-**Goals:**
-- Achieve stable odometry and map generation
-- Enable navigation based on a pre-recorded map
-- Import Nav2 (or alternative) navigation stack
-- Create a controller script interfacing with the Unitree sport client
+```mermaid
+flowchart LR
+    subgraph Architecture ["ROS Topic Architecture"]
+        direction TB
+        
+        classDef proc fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+        classDef file fill:#f1f8e9,stroke:#33691e,stroke-width:1px,stroke-dasharray: 5 5,color:#000
+        classDef term fill:#fff3e0,stroke:#e65100,stroke-width:1px,color:#000
+
+        CFG["config/utlidar.yaml"]:::file
+        LIDAR(["UTLiDAR Driver"]):::proc
+        IMU(["IMU Driver"]):::proc
+        FASTLIO(["fastlio_mapping"]):::proc
+        SVC(["/map_save Trigger"]):::term
+        P2S(["pointcloud_to_laserscan"]):::proc
+        NAV(["Nav2 Stack"]):::proc
+        GO2(["Go2 Executor"]):::proc
+        RVIZ(["RViz2"]):::proc
+        DBG(["Additional Pointclouds"]):::term
+
+        CFG -.->|"Loads parameters"| LIDAR
+        CFG -.->|"Loads parameters"| IMU
+
+        LIDAR -->|"/utlidar/cloud"| FASTLIO
+        IMU -->|"/utlidar/imu"| FASTLIO
+        SVC -.->|"Service Call"| FASTLIO
+
+        FASTLIO -->|"/cloud_registered"| P2S
+        P2S -->|"/go2_scan"| NAV
+        FASTLIO -->|"/Odometry\n/tf"| NAV
+
+        FASTLIO -->|"/path\n/Laser_map"| RVIZ
+        FASTLIO -->|"/cloud_registered_body\n/cloud_effected"| DBG
+
+        NAV -->|"/cmd_vel"| GO2
+    end
+```
+
+### Changes and Additions
+*   **launch file:** Harmonized frames with rviz standards and aligned frames with the mounted lidar.
+*   **docker environment:** Includes a Dockerfile, docker-compose, Livox SDK2, livox_ros_driver2, unitree_ros2, FAST_LIO_ROS2, and a `.env` file for the network interface.
+*   **config file:** Custom parameters for L1/L2.
+*   **rviz file:** Customized viewer.
+*   **preprocess.cpp:** Added `utlidar_handler` and a `UTLIDAR` switch case.
+*   **preprocess.h:** Added `utlidar_handler` declaration, `UTLIDAR` enum value, and `utlidar_ros` namespace.
+*   **nav2 yaml:** Changed robot_radius to footprint: `[ [0.35, 0.155], [0.35, -0.155], [-0.35, -0.155], [-0.35, 0.155] ]` for local and global maps.
+*   **execution.py:** Added as a standalone python script for movement execution.
+*   **base_link_path:** Added a python script to publish the robot center's path.
+*   **master_launch.py:** Added a launch sequence which launches the executor first, then nav2, and finally fast_lio.
+*   **Transformation (odom_to_camera_init):** Set pitch to -164.9ᵒ (-180ᵒ + 15.1ᵒ), which is -2.878 rad.
+*   **Tracking:** Created `base_frame` for tracking the body.
+
+### Current Goal
+*   Verify odometry stability against OptiTrack ground-truth data.
 
 ---
 
-### Prerequisites
-- **OS:** Linux (Ubuntu), RViz forwarding strictly requires an X11 display server environment on the host
-- **Dependencies:** 
-  - Git
-  - Docker and the Docker Compose plugin
+## Environment Setup
 
-### Dockerization and Quick Start
+Build and run the Docker container, passing your specific network interface for the Go2 SDK.
 
-The containerized environment includes Livox SDK2, livox_ros_driver2, unitree_ros2, and FAST_LIO_ROS2.
+*   **Build the image:**
+    ```bash
+    NETWORK_INTERFACE=enx00133b9a06ef docker compose build --no-cache
+    ```
 
-**1. Build the Docker Image**
-Navigate to the root of the repository (or the `docker` directory) where `docker-compose.yml` is located.
-```bash
-# Allow the container to forward RViz to your host display (Linux X11)
-xhost +local:docker
+*   **Run the container in detached mode:**
+    ```bash
+    NETWORK_INTERFACE=enx00133b9a06ef docker compose up -d
+    ```
 
-# Build the image, specifying your hardware network interface
-NETWORK_INTERFACE=enx00133b9a06ef docker compose up -d --build
+To toggle CycloneDDS for online/offline use within your environment:
+
+*   **Enable CycloneDDS:**
+    ```bash
+    export CYCLONEDDS_URI=file:///root/workspace/cyclonedds.xml
+    ```
+
+*   **To revert:**
+    ```bash
+    unset CYCLONEDDS_URI
+    ```
+
+---
+
+## Workflow 1: Mapping and Map Conversion
+
+First, generate the 3D point cloud map, then convert it to a 2D PGM format for Nav2.
+
+1.  **Launch FAST-LIO and drive the robot manually to map the area:**
+    ```bash
+    ros2 launch fast_lio mapping.launch.py config_file:=utlidar.yaml use_sim_time:=false
+    ```
+
+2.  **Save the map as a .pcd file:**
+    ```bash
+    ros2 service call /map_save std_srvs/srv/Trigger
+    ```
+
+Before converting the PCD to a 2D occupancy grid, ensure your `/root/workspace/src/pcd2pgm/config/pcd2pgm.yaml` is configured correctly for your environment:
+
+```yaml
+pcd2pgm:
+  ros__parameters:
+    pcd_file: /root/workspace/src/fast_lio_go2/nav2/map.pcd
+    odom_to_lidar_odom: [0.0, 0.0, 0.0, 0.0, 3.35, 0.0] 
+    flag_pass_through: false
+    map_resolution: 0.05
+    map_topic_name: map
+    thre_radius: 0.1
+    thre_z_max: 5.0
+    thre_z_min: 0.01
+    thres_point_count: 1
 ```
 
-**2. Start the Container**
-```bash
-docker exec -it fast_lio_go2 /bin/bash
-```
+3.  **Broadcast the converted map:**
+    ```bash
+    ros2 launch pcd2pgm pcd2pgm_launch.py
+    ```
 
-**3. Launch FAST-LIO**
-Inside the container, run the mapping node.
-```bash
-ros2 launch fast_lio mapping.launch.py config_file:=utlidar.yaml
-```
+4.  **Save the broadcasted map to disk (run in a separate terminal):**
+    ```bash
+    ros2 run nav2_map_server map_saver_cli -f /root/workspace/src/fast_lio_go2/nav2/global_map
+    ```
+
+5.  **Verify the generated PGM visually:**
+    ```bash
+    eog /root/workspace/src/fast_lio_go2/nav2/global_map.pgm
+    ```
+
+---
+
+## Workflow 2: Autonomous Navigation
+
+To run the entire navigation stack with the pre-recorded map, use the master launch file. This handles the executor, Nav2, and FAST-LIO automatically.
+
+*   **Launch the master sequence:**
+    ```bash
+    ros2 launch src/fast_lio_go2/nav2/master_launch.py network_interface:=enx00133b9a06ef
+    ```
+
+*   **Send a manual goal pose via terminal (or use RViz '2D Goal Pose'):**
+    ```bash
+    ros2 topic pub --once /goal_pose geometry_msgs/msg/PoseStamped "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'map'}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}"
+    ```
+
+> **Note:** For isolated Nav2 debugging without the master script, you can use: 
+> `ros2 launch nav2_bringup bringup_launch.py use_sim_time:=false use_velocity_smoother:=true map:=/root/workspace/src/fast_lio_go2/nav2/global_map.yaml params_file:=/root/workspace/src/fast_lio_go2/nav2/go2_nav2_params.yaml`
+
+---
+
+## Simulation and Playback
+
+To analyze past runs using ROS 2 bags, utilize simulation time to ensure RViz interprets the recorded TF data correctly.
+
+*   **Start RViz with the custom viewer and simulation time enabled:**
+    ```bash
+    ros2 run rviz2 rviz2 -d install/fast_lio/share/fast_lio/rviz/fastlio.rviz --ros-args -p use_sim_time:=true
+    ```
+
+*   **Play the bag file using the simulated clock:**
+    ```bash
+    ros2 bag play <rosbag_name> --clock
+    ```
 
 ---
 

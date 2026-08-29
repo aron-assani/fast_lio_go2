@@ -32,7 +32,6 @@ class Nav2Executor(Node):
         else:
             self.get_logger().warn("OFFLINE MODE: Hardware clients bypassed.")
 
-        # System default QoS guarantees compatibility with Nav2's Twist publishers
         self.cmd_vel_sub = self.create_subscription(Twist, '/cmd_vel', self.cmd_vel_callback, qos_profile_system_default)
         
         self.last_cmd_time = self.get_clock().now()
@@ -46,8 +45,15 @@ class Nav2Executor(Node):
         vy = msg.linear.y
         yaw_rate = msg.angular.z
 
-        # Stop command threshold
-        if abs(vx) < 0.01 and abs(vy) < 0.01 and abs(yaw_rate) < 0.01:
+        # Deadbands for the Go2 gait
+        MIN_LIN_VEL = 0.06
+        MIN_ANG_VEL = 0.15
+
+        if abs(vx) < MIN_LIN_VEL: vx = 0.0
+        if abs(vy) < MIN_LIN_VEL: vy = 0.0
+        if abs(yaw_rate) < MIN_ANG_VEL: yaw_rate = 0.0
+
+        if vx == 0.0 and vy == 0.0 and yaw_rate == 0.0:
             if self.is_moving:
                 if self.sport_client: 
                     self.sport_client.StopMove()
@@ -59,7 +65,7 @@ class Nav2Executor(Node):
         self.is_moving = True
 
     def watchdog_check(self):
-        # Stop moving if planner stops sending commands utilizing the ROS 2 clock
+        # Stop moving if planner stops sending commands using the ROS 2 clock
         time_since_last_cmd = (self.get_clock().now() - self.last_cmd_time).nanoseconds / 1e9
         if time_since_last_cmd > 0.5 and self.is_moving:
             self.get_logger().warn("Watchdog triggered: No cmd_vel received in 0.5s. Stopping.")

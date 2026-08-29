@@ -7,7 +7,7 @@
         filter_size_map: 0.25
         cube_side_length: 1000.0
         runtime_pos_log_enable: false
-        map_file_path: "root/workspace/nav2/map.pcd"
+        map_file_path: "/root/workspace/src/fast_lio_go2/nav2/map.pcd"
 
         common:
             lid_topic:  "/utlidar/cloud"
@@ -24,10 +24,10 @@
             scan_rate: 10
 
         mapping:
-            acc_cov: 2.5
+            acc_cov: 8.0
             gyr_cov: 5.0
-            b_acc_cov: 0.1
-            b_gyr_cov: 1.0
+            b_acc_cov: 5.0
+            b_gyr_cov: 5.0
             fov_degree:    180.0
             det_range:     30.0
             extrinsic_est_en:  false      # true: enable the online estimation of IMU-LiDAR extrinsic
@@ -42,7 +42,7 @@
             map_en: true                 # true: publish Map cloud
             scan_publish_en:  true       # false: close all the point cloud output
             dense_publish_en: false      # false: low down the points number in a global-frame point clouds scan.
-            scan_bodyframe_pub_en: false  # true: output the point cloud scans in IMU-body-frame
+            scan_bodyframe_pub_en: true  # true: output the point cloud scans in IMU-body-frame
 
         pcd_save:
             pcd_save_en: true

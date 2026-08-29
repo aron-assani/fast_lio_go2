@@ -11,5 +11,6 @@ services:
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
+      - NETWORK_INTERFACE=${NETWORK_INTERFACE}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix

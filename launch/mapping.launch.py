@@ -52,7 +52,7 @@ def generate_launch_description():
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
-        arguments=['-d', rviz_cfg],
+        arguments=['-d', rviz_cfg, '--ros-args', '--log-level', 'WARN'],
         parameters=[{'use_sim_time': use_sim_time}],
         condition=IfCondition(rviz_use)
     )
@@ -79,7 +79,7 @@ def generate_launch_description():
             '--y', '0.0', 
             '--z', '0.0',
             '--yaw', '0.0', 
-            '--pitch', '2.878', 
+            '--pitch', '-2.878',
             '--roll', '0.0',
             '--frame-id', 'odom', 
             '--child-frame-id', 'camera_init'
@@ -108,10 +108,10 @@ def generate_launch_description():
         executable='pointcloud_to_laserscan_node',
         name='pointcloud_to_laserscan',
         parameters=[{
-            'target_frame': 'odom', 
-            'transform_tolerance': 0.05,
-            'min_height': 0.25,
-            'max_height': 0.45,
+            'target_frame': 'base_link', 
+            'transform_tolerance': 0.2,
+            'min_height': -0.1,
+            'max_height': 0.5,
             'angle_min': -3.1415,
             'angle_max': 3.1415,
             'angle_increment': 0.0087,
@@ -123,7 +123,7 @@ def generate_launch_description():
             'use_sim_time': use_sim_time
         }],
         remappings=[
-            ('cloud_in', '/Laser_map'), 
+            ('cloud_in', '/cloud_registered'), 
             ('scan', '/go2_scan')
         ]
     )
