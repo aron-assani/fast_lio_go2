@@ -61,6 +61,8 @@ flowchart LR
 *   **Transformation (odom_to_camera_init):** Set pitch to -164.9ᵒ (-180ᵒ + 15.1ᵒ), which is -2.878 rad.
 *   **Tracking:** Created `base_frame` for tracking the body.
 
+Built-in LiDAR compatibility is taken from [point_lio_unilidar](https://github.com/unitreerobotics/point_lio_unilidar)
+
 ### Current Goal
 *   Verify odometry stability against OptiTrack ground-truth data.
 
