@@ -7,6 +7,8 @@
 
 This repository integrates the Unitree Go2 with FAST-LIO and Nav2 for stable odometry, map generation, and autonomous navigation. The environment is fully dockerized.
 
+A high-level overview can be read [here](doc/Go2_nav_doc.pdf).
+
 ### ROS Topic Architecture
 
 ```mermaid
